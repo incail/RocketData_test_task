@@ -8,4 +8,4 @@ Instructions for starting:
     pip install -r requirements.txt
   
   3. Run project:
-   .python3 main.py
+    python3 main.py
