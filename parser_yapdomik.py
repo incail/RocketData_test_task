@@ -10,13 +10,15 @@ def yapdomik():
     cities = ['achinsk', 'berdsk', 'krsk', 'nsk', 'omsk', 'tomsk']
     result = []
     for city in cities:
-        result += parser(city)
+        result += get_data(city)
+    logging.info(f'{len(result)} locations found')
     with open('yapdomik.json', 'w', encoding='utf-8') as file:
         json.dump(result, file, indent=4, sort_keys=False, ensure_ascii=False)
     logging.info('Successfully')
 
 
-def parser(city: str):
+def get_data(city: str):
+    """" Get locations from: https://omsk.yapdomik.ru/ """
     link = f'https://{city}.yapdomik.ru/'
     response = requests.get(link)
     soup = BeautifulSoup(response.text, 'lxml')
@@ -25,6 +27,7 @@ def parser(city: str):
     phones = soup.find('div', 'contacts__phone').text.replace('\n', '')
 
     scripts = soup.find_all('script')
+    # tag that stores json data such as addresses, phone numbers and working hours
     data = json.loads(scripts[2].text[22:])
     result_card = {}
     for shop in data['shops']:
