@@ -8,33 +8,35 @@ from bs4 import BeautifulSoup
 def yapdomik():
     logging.info('Start parsing yapdomik')
     cities = ['achinsk', 'berdsk', 'krsk', 'nsk', 'omsk', 'tomsk']
-    result = []
-    for city in cities:
-        result += get_data(city)
-    logging.info(f'{len(result)} locations found')
+    result = get_data(cities)
     with open('yapdomik.json', 'w', encoding='utf-8') as file:
         json.dump(result, file, indent=4, sort_keys=False, ensure_ascii=False)
+    logging.info(f'{len(result)} found')
     logging.info('Successfully')
 
 
-def get_data(city: str):
-    """" Get locations from: https://omsk.yapdomik.ru/ """
-    link = f'https://{city}.yapdomik.ru/'
-    response = requests.get(link)
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    name = soup.find('a').find('img').get('alt')
-    phones = soup.find('div', 'contacts__phone').text.replace('\n', '')
-
-    scripts = soup.find_all('script')
-    # tag that stores json data such as addresses, phone numbers and working hours
-    data = json.loads(scripts[2].text[22:])
-    result_card = {}
-    for shop in data['shops']:
-        result_card['name'] = name
-        result_card['address'] = '{}, {}'.format(data['city']['name'], shop['address'])
-        result_card['latlon'] = [shop['coord']['latitude'], shop['coord']['longitude']]
-        result_card['phones'] = [phones]
-        result_card['working_hours'] = [
-            'Пн - Вс {} - {}'.format(shop['schedule'][0]['openTime'], shop['schedule'][0]['closeTime'])]
-        yield result_card
+def get_data(cities: list):
+    """" Get locations from: https://yapdomik.ru/ """
+    result_cards = []
+    for city in cities:
+        link = f'https://{city}.yapdomik.ru/'
+        response = requests.get(link)
+        soup = BeautifulSoup(response.text, 'lxml')
+        name = soup.find('a').find('img').get('alt')
+        phones = soup.find('div', 'contacts__phone').text.replace('\n', '')
+        scripts = soup.find_all('script')
+        # tag that stores json data such as addresses, phone numbers and working hours
+        data = json.loads(scripts[2].text[22:])
+        for shop in data['shops']:
+            result_cards.append(
+                {
+                    'name': name,
+                    'address': '{}, {}'.format(data['city']['name'], shop['address']),
+                    'latlon': [shop['coord']['latitude'], shop['coord']['longitude']],
+                    'phones': [phones],
+                    'working_hours': [
+                        'Пн - Вс {} - {}'.format(shop['schedule'][0]['openTime'], shop['schedule'][0]['closeTime'])
+                    ]
+                }
+            )
+    return result_cards

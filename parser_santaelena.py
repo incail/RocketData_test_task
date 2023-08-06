@@ -4,6 +4,7 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
+from geopy.geocoders import Yandex
 
 
 def santaelena():
@@ -24,7 +25,6 @@ def santaelena():
 def get_data(links: list, session: requests):
 
     """" Get all locations from: https://www.santaelena.com"""
-
     result_cards = []
     for link in links:
         response = session.get(link)
@@ -43,7 +43,6 @@ def get_data(links: list, session: requests):
             temp = temp.split('::')
             locations.append(temp)
         names = [name.text for name in html_names]
-
         for i in range(len(names)):
             result_cards.append({
                 'name': names[i],
