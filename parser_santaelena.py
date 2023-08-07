@@ -35,21 +35,20 @@ def get_data(links: list, session: requests):
         # these tags store information about the address, working time and phones of the institutions
         html_locations = html_with_cards.find_all('div', class_='elementor-text-editor elementor-clearfix')
         locations = []
-
         for loc in html_locations:
             if len(re.findall(r'<p>', str(loc))) < 2:
                 continue
-            temp = loc.text.replace('\nDirección:', '').replace('Teléfono', ':').replace('Horario de atención', ':')
-            temp = temp.split('::')
-            locations.append(temp)
+            locations.append(loc.text)
         names = [name.text for name in html_names]
         for i in range(len(names)):
+            address = re.findall(r'(?=Dirección:|Dirección:\n)(.+?)(?=Teléfono|\n)', locations[i])
+            working_hours = re.findall(r'Horario de atención:.(.+)', locations[i], re.DOTALL)
             result_cards.append({
                 'name': names[i],
-                'address': locations[i][0].replace('\n', ''),
+                'address': re.sub(r'(Dirección:|Dirección:\n)', '', ''.join(address)).strip(),
                 'latlon': None,
-                'phones': [locations[i][1].replace('\n', '')],
-                'working_hours': [locations[i][2].replace('\n', '')]
+                'phones': re.findall(r'\d{7}\s\D{3}\s\d{4}|\d{3}\s\d{3}\s\d{4}|\d{7,10}', locations[i]),
+                'working_hours': working_hours[0].strip()
             })
     logging.info(f'{len(result_cards)} locations found')
     return result_cards
